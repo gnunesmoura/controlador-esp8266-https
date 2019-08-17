@@ -1,32 +1,46 @@
-#include "DHT.h"
 #include <ESP8266WiFi.h>
-#include <Weather.h>
+#include <ESP8266WiFiMulti.h>
 
-#define DHTPIN 4      // IMPORTANT D2 on NodeMCU is GPIO 4
-#define DHTTYPE DHT22 // DHT 22 (AM2302), AM2321
+#include <ESP8266HTTPClient.h>
 
-nunes::Weather dht22(DHTPIN);
+#include <WiFiClient.h>
+#include <ArduinoJson.h>
+
+#include <WeatherNotifier.h>
+
+ESP8266WiFiMulti WiFiMulti;
 
 void setup()
 {
-    // put your setup code here, to run once:
-    Serial.begin(9600);
 
-    // Serial.println("");
-    // Serial.println("WiFi connected");
-    // Serial.println("IP address: ");
-    // Serial.println(WiFi.localIP());
+  Serial.begin(9600);
+  // Serial.setDebugOutput(true);
+
+  Serial.println();
+  Serial.println();
+  Serial.println();
+
+  for (uint8_t t = 4; t > 0; t--)
+  {
+    Serial.printf("[SETUP] WAIT %d...\n", t);
+    Serial.flush();
+    delay(1000);
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFiMulti.addAP("Casa da Arvore", "g2996a1111");
 }
+
+nunes::WeatherNotifier notifier("http://10.0.0.101:8080/");
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
-    delay(2000);
+  // wait for WiFi connection
 
-    Serial.print("Humidity: ");
-    Serial.print(dht22.readHumidity());
-    Serial.print(" %\t");
-    Serial.print("Temperature: ");
-    Serial.print(dht22.readTemperature());
-    Serial.print(" *C \n");
+  if ((WiFiMulti.run() == WL_CONNECTED))
+  {
+    notifier.post();
+  }
+
+  delay(1000);
 }
